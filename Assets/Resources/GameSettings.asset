@@ -1,0 +1,239 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a43ffba9441ee84ebe5702b5a293f17, type: 3}
+  m_Name: GameSettings
+  m_EditorClassIdentifier: 
+  GuideLevelSetting:
+    PlayerSide: 0
+    Steps:
+    - obj:
+        rid: 5119975200411615237
+    - obj:
+        rid: 5119975200411615238
+    - obj:
+        rid: 5119975200411615239
+    - obj:
+        rid: 5119975200411615240
+    - obj:
+        rid: 5119975200411615241
+    - obj:
+        rid: 5119975200411615242
+    - obj:
+        rid: 5119975200411615243
+    - obj:
+        rid: 5119975200411615244
+    - obj:
+        rid: 5119975204857315338
+    - obj:
+        rid: 5119975200411615246
+    - obj:
+        rid: 5119975204857315343
+    - obj:
+        rid: 5119975200411615245
+    - obj:
+        rid: 5119975204857315339
+    - obj:
+        rid: 5119975204857315330
+    - obj:
+        rid: 5119975204857315340
+    - obj:
+        rid: 5119975204857315332
+    - obj:
+        rid: 5119975204857315341
+    - obj:
+        rid: 5119975204857315342
+  Levels:
+  - Id: 100
+    AiLevel: 0
+    Condition: 0
+    PassCount: 3
+    GoalText: "\u6253\u8D25\u6BDB\u5C0F\u5F1F3\u6B21"
+    UnlockFeatures: []
+  - Id: 200
+    AiLevel: 1
+    Condition: 1
+    PassCount: 3
+    GoalText: "\u4E0D\u8D25\u9A6C\u5C0F\u54E53\u6B21"
+    UnlockFeatures: []
+  - Id: 300
+    AiLevel: 2
+    Condition: 1
+    PassCount: 3
+    GoalText: "\u4E0D\u8D25\u6D77\u8001\u59343\u6B21"
+    UnlockFeatures: []
+  - Id: 400
+    AiLevel: 2
+    Condition: 0
+    PassCount: -1
+    GoalText: 
+    UnlockFeatures: []
+  Features:
+  - Key: beat_ai_0
+    Name: "\u4E95\u5B57\u68CB\u516B\u6BB5\u9AD8\u624B"
+    Description: "\u53EF\u5728\u83DC\u5355\u5173\u5361\u9009\u62E9\u6BDB\u5C0F\u5F1F\u4F5C\u4E3A\u5BF9\u624B\u4E86\uFF01"
+    Type: 1
+    Count: 3
+    TargetId: 0
+  - Key: beat_ai_1
+    Name: "\u4E95\u5B57\u68CB\u5341\u516B\u6BB5\u9AD8\u624B"
+    Description: "\u53EF\u5728\u83DC\u5355\u5173\u5361\u9009\u62E9\u9A6C\u5C0F\u54E5\u4F5C\u4E3A\u5BF9\u624B\u4E86\uFF01"
+    Type: 7
+    Count: 3
+    TargetId: 1
+  - Key: beat_ai_2
+    Name: "\u4E95\u5B57\u68CB\u516B\u5341\u516B\u6BB5\u9AD8\u624B"
+    Description: "\u53EF\u5728\u83DC\u5355\u5173\u5361\u9009\u62E9\u6D77\u8001\u5934\u4F5C\u4E3A\u5BF9\u624B\u4E86\uFF01"
+    Type: 7
+    Count: 3
+    TargetId: 2
+  - Key: win_in_row_any_3
+    Name: "\u4E09\u6218\u4E09\u80DC"
+    Description: "\u8FDE\u80DC3\u5C40"
+    Type: 2
+    Count: 3
+    TargetId: -1
+  - Key: win_in_row_any_3
+    Name: "\u5341\u6218\u4E0D\u8D25"
+    Description: "\u8FDE\u7EED10\u5C40\u4E0D\u88AB\u6253\u8D25"
+    Type: 4
+    Count: 10
+    TargetId: -1
+  references:
+    version: 2
+    RefIds:
+    - rid: 5119975200411615237
+      type: {class: GuideStep_StartNewGame, ns: , asm: Assembly-CSharp}
+      data:
+        Board:
+          FirstPlayer:
+            Id: 1
+          SelfPlayer:
+            Id: 1
+          History: []
+    - rid: 5119975200411615238
+      type: {class: GuideStep_ShowMessage, ns: , asm: Assembly-CSharp}
+      data:
+        Text: "\u6B22\u8FCE\u6E38\u73A9\u4E95\u5B57\u68CB\u6E38\u620F\uFF01"
+    - rid: 5119975200411615239
+      type: {class: GuideStep_ShowMessage, ns: , asm: Assembly-CSharp}
+      data:
+        Text: "\u4E95\u5B57\u68CB\u7684\u89C4\u5219\u5F88\u7B80\u5355\uFF1A\r\n\u53CC\u65B9\u8F6E\u6D41\u5728\u7A7A\u683C\u653E\u7F6E\u68CB\u5B50\r\n\u5C06\u81EA\u5DF1\u7684\u4E09\u4E2A\u68CB\u5B50\u8FDE\u6210\u76F4\u7EBF\u5C31\u83B7\u80DC"
+    - rid: 5119975200411615240
+      type: {class: GuideStep_WaitingPlayerPlaceChess, ns: , asm: Assembly-CSharp}
+      data:
+        Text: "\u73B0\u5728\u6765\u8BD5\u4E00\u4E0B\u5427\n\u70B9\u51FB\u683C\u5B50\u4E0B\u68CB"
+        x: 1
+        y: 1
+    - rid: 5119975200411615241
+      type: {class: GuideStep_AiPlaceChess, ns: , asm: Assembly-CSharp}
+      data:
+        x: 1
+        y: 0
+    - rid: 5119975200411615242
+      type: {class: GuideStep_WaitingPlayerPlaceChess, ns: , asm: Assembly-CSharp}
+      data:
+        Text: "\u8F6E\u5230\u4F60\u4E86\n\u70B9\u51FB\u683C\u5B50\u4E0B\u68CB"
+        x: 0
+        y: 0
+    - rid: 5119975200411615243
+      type: {class: GuideStep_AiPlaceChess, ns: , asm: Assembly-CSharp}
+      data:
+        x: 0
+        y: 1
+    - rid: 5119975200411615244
+      type: {class: GuideStep_WaitingPlayerPlaceChess, ns: , asm: Assembly-CSharp}
+      data:
+        Text: "\u8F6E\u5230\u4F60\u4E86\n\u70B9\u51FB\u683C\u5B50\u4E0B\u68CB"
+        x: 2
+        y: 2
+    - rid: 5119975200411615245
+      type: {class: GuideStep_WaitingPlayerPlaceChess, ns: , asm: Assembly-CSharp}
+      data:
+        Text: "\u70B9\u51FB\u683C\u5B50\u4E0B\u68CB"
+        x: 1
+        y: 2
+    - rid: 5119975200411615246
+      type: {class: GuideStep_StartNewGame, ns: , asm: Assembly-CSharp}
+      data:
+        Board:
+          FirstPlayer:
+            Id: 1
+          SelfPlayer:
+            Id: 1
+          History:
+          - X: 1
+            Y: 1
+          - X: 1
+            Y: 0
+          - X: 2
+            Y: 0
+          - X: 0
+            Y: 2
+          - X: 0
+            Y: 0
+          - X: 0
+            Y: 1
+          - X: 2
+            Y: 1
+          - X: 2
+            Y: 2
+    - rid: 5119975204857315330
+      type: {class: GuideStep_StartNewGame, ns: , asm: Assembly-CSharp}
+      data:
+        Board:
+          FirstPlayer:
+            Id: 1
+          SelfPlayer:
+            Id: 1
+          History:
+          - X: 2
+            Y: 1
+          - X: 1
+            Y: 0
+          - X: 0
+            Y: 1
+          - X: 0
+            Y: 0
+          - X: 1
+            Y: 2
+          - X: 1
+            Y: 1
+    - rid: 5119975204857315332
+      type: {class: GuideStep_WaitingPlayerRetract, ns: , asm: Assembly-CSharp}
+      data:
+        Text: "\u70B9\u51FB\u6094\u68CB\u6309\u94AE\uFF0C\u56DE\u5230\u4F60\u7684\u4E0A\u4E00\u56DE\u5408"
+    - rid: 5119975204857315338
+      type: {class: GuideStep_WaitingGameOver, ns: , asm: Assembly-CSharp}
+      data:
+        Text: "\u606D\u559C\u4F60\u8D62\u4E86\uFF01\r"
+    - rid: 5119975204857315339
+      type: {class: GuideStep_WaitingGameOver, ns: , asm: Assembly-CSharp}
+      data:
+        Text: "\u5982\u679C\u68CB\u76D8\u6EE1\u4E86\u5374\u6CA1\u6709\u4E00\u65B9\u8FDE\u6210\u4E09\u4E2A\uFF0C\u5219\u4E3A\u5E73\u5C40"
+    - rid: 5119975204857315340
+      type: {class: GuideStep_ShowMessage, ns: , asm: Assembly-CSharp}
+      data:
+        Text: "\u600E\u4E48\u4E0B\u90FD\u4F1A\u8F93\uFF1F\n\u6CA1\u5173\u7CFB\uFF0C\u53EF\u4EE5\u6094\u4E00\u6B21\u68CB\uFF01"
+    - rid: 5119975204857315341
+      type: {class: GuideStep_WaitingPlayerPlaceChess, ns: , asm: Assembly-CSharp}
+      data:
+        Text: "\u73B0\u5728\u53EF\u4EE5\u628A\u68CB\u4E0B\u5230\u66F4\u597D\u7684\u5730\u65B9\u4E86\uFF01\n\u70B9\u51FB\u683C\u5B50\u4E0B\u68CB"
+        x: 1
+        y: 1
+    - rid: 5119975204857315342
+      type: {class: GuideStep_WaitingGameOver, ns: , asm: Assembly-CSharp}
+      data:
+        Text: "\u4F60\u5B66\u4F1A\u4E86\u5417\uFF1F\n\u8BD5\u7740\u6253\u8D25\u8D8A\u6765\u8D8A\u5389\u5BB3\u7684\u5BF9\u624B\uFF0C\n\u6210\u4E3A\u4E95\u5B57\u68CB\u5927\u5E08\u5427\uFF01"
+    - rid: 5119975204857315343
+      type: {class: GuideStep_ShowMessage, ns: , asm: Assembly-CSharp}
+      data:
+        Text: "\u518D\u6765\u770B\u770B\u8FD9\u79CD\u60C5\u51B5\n\u68CB\u76D8\u5DF2\u7ECF\u5FEB\u6EE1\u4E86"
