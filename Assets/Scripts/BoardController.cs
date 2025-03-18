@@ -93,6 +93,7 @@ public class BoardContext : ISerializationCallbackReceiver
 
 	public PlayerId CurrentPlayer => (History.Count & 1) == 0 ? FirstPlayer : FirstPlayer.Opponent;
 	public bool IsSelfRound => CurrentPlayer == SelfPlayer;
+	public bool IsSelfFirst => FirstPlayer == SelfPlayer;
 	public bool GameOver => GameResult != GameResult.None;
 	public PlayerId Winner => GameResult switch
 	{
@@ -422,6 +423,7 @@ public class BoardController : MonoBehaviour
 	{
 		if (_connectLineObject != null)
 		{
+			DOTween.Kill(_connectLineObject);
 			Destroy(_connectLineObject);
 			_connectLineObject = null;
 		}
@@ -470,7 +472,7 @@ public class BoardController : MonoBehaviour
 			float dis1 = Vector3.Distance(RoundIndicator.transform.position, SelfIcon.transform.position);
 			float dis2 = Vector3.Distance(RoundIndicator.transform.position, OpponentIcon.transform.position);
 			float v = Mathf.Min(dis1, dis2) * 2 / dis;
-			float s = 1f + v * 0.8f;
+			float s = 1f + v * 1f;
 			float w = tf.rect.height * s;
 			tf.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, w);
 		});

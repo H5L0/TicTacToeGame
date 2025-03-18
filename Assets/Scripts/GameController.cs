@@ -3,16 +3,11 @@ using System.Collections;
 using UnityEngine;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour
 {
 	public UIController UI;
 	public BoardController Board;
-
-	private BoardContext _context;
-	private AIPlayer _ai;
-	private BattleData _battleData;
 
 	public enum GameState
 	{
@@ -20,12 +15,14 @@ public class GameController : MonoBehaviour
 	}
 
 	GameState _gameState = GameState.None;
-	LevelState _levelState = new LevelState();
+	LevelState _levelState;
+	BoardContext Context => _levelState.BoardContext;
+	BattleData BattleData => _levelState.BattleData;
+	AIPlayer _ai;
 
 	// Start is called before the first frame update
 	void Start()
 	{
-		_battleData = new();
 		Board.SetScore(0, 0, 0);
 		Board.OnPlayerClickCell = OnPlayerClickCell;
 		UI.SetCallbacks(OnPlayerClickRetract, OnPlayerClickRestart);
@@ -38,48 +35,47 @@ public class GameController : MonoBehaviour
 		}
 		else if (ScenePassingData.EntryMode == GameEntryMode.StartFromFirstLevel)
 		{
-			StartGame(new LevelState());
-			StorageManager.Instance.TrySaveLevelState(_levelState);
+			var levelState = new LevelState();
+			StartGame(levelState);
 		}
 		else if (ScenePassingData.EntryMode == GameEntryMode.LoadFromLevel)
 		{
-			StartGame(ScenePassingData.LoadLevelState, ScenePassingData.LoadBoardContext);
-			ScenePassingData.LoadBoardContext = null;
+			StartGame(ScenePassingData.LoadLevelState);
+			ScenePassingData.LoadLevelState = null;
 		}
 		else if (ScenePassingData.EntryMode == GameEntryMode.JumpToLevel)
 		{
 			int index = GameSettings.Instance.Levels.FindIndex(e => e.Id == ScenePassingData.JumpToLevelId);
-			StartGame(new LevelState() { LevelIndex = index });
-			StorageManager.Instance.TrySaveLevelState(_levelState);
+			var levelState = new LevelState(index);
+			StartGame(levelState);
 		}
 	}
 
 	public void StartGuideGame(BoardContext context)
 	{
 		_gameState = GameState.Playing;
-		_levelState = null;
-		_context = context;
+		_levelState.BoardContext = context;
+		_ai = null;
 		UI.SetLevelInfoText("教程");
-		Board.Initialize(_context);
+		Board.Initialize(Context);
 		Board.SetPlayerIcon("你", "对手");
 		OnRoundUpdate();
 	}
 
-	public void StartGame(LevelState state, BoardContext context = null)
+	public void StartGame(LevelState state)
 	{
-		var lastLevelState = _levelState;
+		StorageManager.Instance.TrySaveLevelState(state);
+		_gameState = GameState.None;
 		_levelState = state;
 		_ai = AIPlayer.GetAIPlayer(state.GetLevelInfo().AiLevel);
-		_context = context ?? new BoardContext(PlayerId.X, true);
-		// 切换对手时重置计分
-		if (lastLevelState == null || _levelState.LevelIndex != lastLevelState.LevelIndex)
-			_battleData = new();
 		UI.SetGuideMode(false, OnPlayerClickExit);
 		StartCoroutine(IE_GameStart());
 	}
 
 	public void RestartGame()
 	{
+		var lastContext = _levelState.BoardContext;
+		_levelState.BoardContext = new BoardContext(lastContext.SelfPlayer, lastContext.IsSelfFirst);
 		StartGame(_levelState);
 	}
 
@@ -95,14 +91,14 @@ public class GameController : MonoBehaviour
 		SoundHelper.PlaySfx(Sound.GameStart);
 
 		yield return null;
-		Board.Initialize(_context);
+		Board.Initialize(Context);
 		Board.SetPlayerIcon("你", _levelState.GetLevelInfo().OpponentName);
-		Board.SetScore(_battleData.WinCount, _battleData.TieCount, _battleData.LoseCount);
+		Board.SetScore(BattleData.WinCount, BattleData.TieCount, BattleData.LoseCount);
 
 		var levelInfo = _levelState.GetLevelInfo();
 		string levelText = levelInfo.GoalText;
 		if (levelInfo.PassCount > 0)
-			levelText += $" ({_levelState.PassedCount}/{levelInfo.PassCount})";
+			levelText += $"({_levelState.PassedCount}/{levelInfo.PassCount})";
 		UI.SetLevelInfoText(levelText);
 
 		UI.ShowMainMessage("游戏开始！", 1);
@@ -116,13 +112,18 @@ public class GameController : MonoBehaviour
 	{
 		_gameState = GameState.GameOver;
 
+		// 更新得分
+		BattleData.AddBattleData(Context.GameResult);
+		Board.SetScore(BattleData.WinCount, BattleData.TieCount, BattleData.LoseCount);
+
 		// 保存关卡进度
 		bool passed = false;
 		if (!IsInGuide())
 		{
 			var levelSetting = _levelState.GetLevelInfo();
-			if ((levelSetting.Condition == LevelInfo.PassCondition.Win && _context.GameResult == GameResult.Win)
-				|| (levelSetting.Condition == LevelInfo.PassCondition.NotLose && _context.GameResult != GameResult.Lose))
+			if (levelSetting.PassCount <= 0
+				||(levelSetting.Condition == LevelInfo.PassCondition.Win && Context.GameResult == GameResult.Win)
+				|| (levelSetting.Condition == LevelInfo.PassCondition.NotLose && Context.GameResult != GameResult.Lose))
 			{
 				passed = true;
 				var nextGame = _levelState.GetNextGame();
@@ -134,25 +135,20 @@ public class GameController : MonoBehaviour
 			}
 		}
 
-		// 更新得分
-		_battleData.AddBattleData(_context.GameResult);
-		Board.SetScore(_battleData.WinCount, _battleData.TieCount, _battleData.LoseCount);
-
-
 		await UniTask.WaitForSeconds(0.5f);
 		UI.SetStatusText("游戏结束");
 
 		// 画线
-		if (_context.GameResult != GameResult.Tie)
+		if (Context.GameResult != GameResult.Tie)
 		{
 			SoundHelper.PlaySfx(Sound.DrawLine);
-			await Board.ShowConnectLine(_context.WinnerLine);
+			await Board.ShowConnectLine(Context.WinnerLine);
 		}
 		await UniTask.WaitForSeconds(0.25f);
 
 		if (IsInGuide())
 		{
-			UI.ShowGameOverPanel(_context.GameResult, null,
+			UI.ShowGameOverPanel(Context.GameResult, null,
 				onContinue: GuideWaitingGameOverCallback,
 				guideMessage: GuideWaitingGameOverMessage);
 		}
@@ -160,23 +156,24 @@ public class GameController : MonoBehaviour
 		{
 			var levelSetting = _levelState.GetLevelInfo();
 			// 统计对局并解锁勋章
-			var unlockFeatures = StorageManager.Instance.TryUnlockFeature(levelSetting.AiLevel, _context.GameResult);
+			var unlockFeatures = StorageManager.Instance.TryUnlockFeature(levelSetting.AiLevel, Context.GameResult);
 			// 显示结束界面
+			Action onRetry = passed ? null : RestartGame;
 			Action onContinue = passed ? NextGame : null;
-			if (_context.Winner == _context.SelfPlayer)
+			if (Context.Winner == Context.SelfPlayer)
 			{
 				SoundHelper.PlaySfx(Sound.Win);
-				UI.ShowGameOverPanel(_context.GameResult, RestartGame, onContinue, unlockFeatures);
+				UI.ShowGameOverPanel(Context.GameResult, onRetry, onContinue, unlockFeatures);
 			}
-			else if (_context.Winner == PlayerId.None)
+			else if (Context.Winner == PlayerId.None)
 			{
 				SoundHelper.PlaySfx(Sound.Tie);
-				UI.ShowGameOverPanel(_context.GameResult, RestartGame, onContinue, unlockFeatures);
+				UI.ShowGameOverPanel(Context.GameResult, onRetry, onContinue, unlockFeatures);
 			}
 			else
 			{
 				SoundHelper.PlaySfx(Sound.Lose);
-				UI.ShowGameOverPanel(_context.GameResult, RestartGame, onContinue, unlockFeatures);
+				UI.ShowGameOverPanel(Context.GameResult, onRetry, onContinue, unlockFeatures);
 			}
 
 		}
@@ -186,17 +183,17 @@ public class GameController : MonoBehaviour
 	{
 		UpdateRetractButton();
 		Board.UpdatePlayerRoundIndicator();
-		if (_context.GameOver)
+		if (Context.GameOver)
 		{
 			OnGameOver().Forget();
 		}
 		else
 		{
-			if (_context.IsSelfRound)
+			if (Context.IsSelfRound)
 			{
 				if (!IsInGuide())
 				{
-					if (_context.History.Count == 0)
+					if (Context.History.Count == 0)
 						UI.ShowSubMessage("你先下");
 					//else
 					//	UI.ShowSubMessage("轮到你了");
@@ -205,7 +202,7 @@ public class GameController : MonoBehaviour
 			}
 			else
 			{
-				if (!IsInGuide() && _context.History.Count == 0)
+				if (!IsInGuide() && Context.History.Count == 0)
 					UI.ShowSubMessage("对手先下");
 				UI.SetStatusText("等待对手下棋");
 				if (IsInGuide()) // 教程里对手的棋已经手动指定了
@@ -220,10 +217,10 @@ public class GameController : MonoBehaviour
 		if (_gameState != GameState.Playing)
 			return;
 
-		if (_context.CurrentPlayer != _context.SelfPlayer)
+		if (Context.CurrentPlayer != Context.SelfPlayer)
 			return;
 
-		if (!_context.GetCell(position).IsNone)
+		if (!Context.GetCell(position).IsNone)
 			return;
 
 		if (IsInGuide())
@@ -242,17 +239,14 @@ public class GameController : MonoBehaviour
 
 	async UniTask DoOpponentRoundAsync()
 	{
-		if (_context.GameOver)
+		if (Context.GameOver)
 			return;
 
-		if (_context.IsSelfRound)
+		if (Context.IsSelfRound)
 			throw new Exception("Not Ai Round");
 
-		var position = await _ai.GetMoveAsync(_context);
-		Board.PlaceChess(position);
-		SoundHelper.PlaySfx(Sound.DoMove);
-		await UniTask.WaitForSeconds(0.4f);
-		OnRoundUpdate();
+		var position = await _ai.GetMoveAsync(Context);
+		PlaceChess(position);
 	}
 
 	public void PlaceChess(Position position)
@@ -267,12 +261,12 @@ public class GameController : MonoBehaviour
 		if (_gameState != GameState.Playing)
 			return false;
 		// 写死只能撤销一次
-		if (_context.RetractCount >= 1)
+		if (Context.RetractCount >= 1)
 			return false;
-		if (_context.IsSelfRound)
-			return _context.History.Count >= 2;
+		if (Context.IsSelfRound)
+			return Context.History.Count >= 2;
 		else
-			return _context.History.Count >= 1;
+			return Context.History.Count >= 1;
 	}
 
 	void UpdateRetractButton()
@@ -285,7 +279,7 @@ public class GameController : MonoBehaviour
 		if (!CanRetract())
 			return;
 		_gameState = GameState.Pause;
-		if (_context.IsSelfRound)
+		if (Context.IsSelfRound)
 		{
 			SoundHelper.PlaySfx(Sound.Retract);
 			Board.RetractChess(); // 撤销对手一回合
@@ -312,7 +306,7 @@ public class GameController : MonoBehaviour
 	{
 		if (!IsInGuide() && (_gameState == GameState.Playing || _gameState == GameState.Pause))
 		{
-			StorageManager.Instance.SaveBoardContext(_context);
+			StorageManager.Instance.TrySaveLevelState(_levelState);
 		}
 		SceneHelper.FadeLoadScene("MenuScene");
 	}
@@ -329,6 +323,7 @@ public class GameController : MonoBehaviour
 
 	async void GuideStart()
 	{
+		_levelState = new();
 		_currentGuideLevelSetting = GameSettings.Instance.GuideLevelSetting;
 		_guideCancelationSource = new();
 		UI.SetGuideMode(true, OnSkipGuide);

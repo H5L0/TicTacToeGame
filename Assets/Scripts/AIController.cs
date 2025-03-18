@@ -27,7 +27,7 @@ public class AIPlayer_Random : AIPlayer
 {
 	public override async UniTask<Position> GetMoveAsync(BoardContext board)
 	{
-		await UniTask.WaitForSeconds(0.5f);
+		await UniTask.WaitForSeconds(1f);
 		List<Position> emptyPositions = board.GetEmptyCells().ToList();
 		int i = Random.Range(0, emptyPositions.Count);
 		return emptyPositions[i];
@@ -42,7 +42,7 @@ public class AIPlayer_AttackOrBlock : AIPlayer
 {
 	public override async UniTask<Position> GetMoveAsync(BoardContext board)
 	{
-		var delayTime = Random.Range(0.7f, 1.2f);
+		var delayTime = Random.Range(1f, 1.5f);
 		await UniTask.WaitForSeconds(delayTime);
 		// 可以进攻
 		var finalPositions = board.FindFinalCells(board.CurrentPlayer).ToList();
@@ -73,7 +73,7 @@ public class AIPlayer_MiniMax : AIPlayer
 {
 	public override async UniTask<Position> GetMoveAsync(BoardContext board)
 	{
-		await UniTask.WaitForSeconds(1.5f);
+		await UniTask.WaitForSeconds(2f);
 		return await UniTask.RunOnThreadPool(() => GetMinimax(board, 0, true).Item2);
 	}
 

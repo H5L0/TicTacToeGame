@@ -18,7 +18,6 @@ public static class ScenePassingData
 {
 	public static GameEntryMode EntryMode;
 	public static LevelState LoadLevelState;
-	public static BoardContext LoadBoardContext;
 	public static int JumpToLevelId;
 }
 
@@ -133,9 +132,6 @@ public class MenuController : MonoBehaviour
 	{
 		ScenePassingData.EntryMode = GameEntryMode.LoadFromLevel;
 		ScenePassingData.LoadLevelState = levelState;
-		StorageManager.Instance.TryGetBoardContext(out var boardContext);
-		ScenePassingData.LoadBoardContext = boardContext;
-		StorageManager.Instance.DeleteLevelState();
 		SceneHelper.FadeLoadScene("MainScene");
 	}
 

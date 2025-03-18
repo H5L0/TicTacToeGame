@@ -7,7 +7,6 @@ public class StorageManager
 	public static StorageManager Instance => _instance ??= new StorageManager();
 
 	const string HaveReadGuidancePrefix = "HaveReadGuidance";
-	const string BoardContextPrefix = "BoardContext";
 	const string LevelStatePrefix = "LevelState";
 	const string BattleDataPrefix = "BattleData_";
 	const string FeaturePrefix = "UnlockFeature_";
@@ -71,31 +70,7 @@ public class StorageManager
 	public void DeleteLevelState()
 	{
 		PlayerPrefs.DeleteKey(LevelStatePrefix);
-		PlayerPrefs.DeleteKey(BoardContextPrefix);
 		PlayerPrefs.Save();
-	}
-
-	public void SaveBoardContext(BoardContext context)
-	{
-		var saveJson = JsonUtility.ToJson(context);
-		PlayerPrefs.SetString(BoardContextPrefix, saveJson);
-		PlayerPrefs.Save();
-	}
-	
-	public bool TryGetBoardContext(out BoardContext context)
-	{
-		var json = PlayerPrefs.GetString(BoardContextPrefix, "");
-		if (string.IsNullOrEmpty(json))
-		{
-			context = null;
-			return false;
-		}
-		else
-		{
-			context = new BoardContext(PlayerId.X, true);
-			JsonUtility.FromJsonOverwrite(json, context);
-			return true;
-		}
 	}
 
 	public bool IsFeatureUnlock(string key)
@@ -185,7 +160,7 @@ public class StorageManager
 
 
 
-class BattleData
+public class BattleData
 {
 	public int WinCount;
 	public int LoseCount;
@@ -228,6 +203,16 @@ public class LevelState
 {
 	public int LevelIndex;
 	public int PassedCount;
+	public BattleData BattleData;
+	public BoardContext BoardContext;
+
+	public LevelState(int levelIndex = 0, int passedCount = 0)
+	{
+		LevelIndex = levelIndex;
+		PassedCount = passedCount;
+		BattleData = new();
+		BoardContext = new(PlayerId.X, true);
+	}
 
 	// 下一小关
 	public LevelState GetNextGame()
@@ -236,7 +221,15 @@ public class LevelState
 		// Count < 0: 无尽模式
 		if (levelInfo.PassCount <= 0 || PassedCount + 1 < levelInfo.PassCount)
 		{
-			return new LevelState() { LevelIndex = LevelIndex, PassedCount = PassedCount + 1 };
+			// 换X/O (X总是第一个)
+			var self = BoardContext.SelfPlayer.Opponent;
+			return new LevelState()
+			{
+				LevelIndex = LevelIndex,
+				PassedCount = PassedCount + 1,
+				BattleData = BattleData,
+				BoardContext = new BoardContext(self, self == PlayerId.X),
+			};
 		}
 		else
 		{
@@ -249,11 +242,12 @@ public class LevelState
 	{
 		if (LevelIndex + 1 < GameSettings.Instance.Levels.Count)
 		{
-			return new LevelState() { LevelIndex = LevelIndex + 1 };
+			return new LevelState(LevelIndex + 1);
 		}
 		else
 		{
-			return new LevelState() { LevelIndex = -1 };
+			//暂时不使用这种情况
+			return new LevelState(-1);
 		}
 	}
 
