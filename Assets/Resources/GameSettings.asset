@@ -54,27 +54,52 @@ MonoBehaviour:
   Levels:
   - Id: 100
     AiLevel: 0
+    OpponentName: "\u6BDB\u5C0F\u5F1F"
     Condition: 0
     PassCount: 3
-    GoalText: "\u6253\u8D25\u6BDB\u5C0F\u5F1F3\u6B21"
+    GoalText: "\u76EE\u6807:\u6253\u8D25\u6BDB\u5C0F\u5F1F3\u6B21"
     UnlockFeatures: []
   - Id: 200
     AiLevel: 1
+    OpponentName: "\u9A6C\u5C0F\u54E5"
     Condition: 1
     PassCount: 3
-    GoalText: "\u4E0D\u8D25\u9A6C\u5C0F\u54E53\u6B21"
+    GoalText: "\u76EE\u6807:\u4E0D\u8D25\u9A6C\u5C0F\u54E53\u6B21"
     UnlockFeatures: []
   - Id: 300
     AiLevel: 2
+    OpponentName: "\u6D77\u8001\u5934"
     Condition: 1
     PassCount: 3
-    GoalText: "\u4E0D\u8D25\u6D77\u8001\u59343\u6B21"
+    GoalText: "\u76EE\u6807:\u4E0D\u8D25\u6D77\u8001\u59343\u6B21"
     UnlockFeatures: []
   - Id: 400
     AiLevel: 2
+    OpponentName: "\u6D77\u8001\u5934"
     Condition: 0
     PassCount: -1
-    GoalText: 
+    GoalText: "\u4E0E\u6D77\u8001\u5934\u5207\u78CB"
+    UnlockFeatures: []
+  - Id: 1000
+    AiLevel: 0
+    OpponentName: "\u6BDB\u5C0F\u5F1F"
+    Condition: 0
+    PassCount: -1
+    GoalText: "\u4E0E\u6BDB\u5C0F\u5F1F\u5207\u78CB"
+    UnlockFeatures: []
+  - Id: 1001
+    AiLevel: 1
+    OpponentName: "\u9A6C\u5C0F\u54E5"
+    Condition: 0
+    PassCount: -1
+    GoalText: "\u4E0E\u9A6C\u5C0F\u54E5\u5207\u78CB"
+    UnlockFeatures: []
+  - Id: 1002
+    AiLevel: 2
+    OpponentName: "\u6D77\u8001\u5934"
+    Condition: 0
+    PassCount: -1
+    GoalText: "\u4E0E\u6D77\u8001\u5934\u5207\u78CB"
     UnlockFeatures: []
   Features:
   - Key: beat_ai_0
@@ -104,7 +129,7 @@ MonoBehaviour:
   - Key: win_in_row_any_3
     Name: "\u5341\u6218\u4E0D\u8D25"
     Description: "\u8FDE\u7EED10\u5C40\u4E0D\u88AB\u6253\u8D25"
-    Type: 4
+    Type: 8
     Count: 10
     TargetId: -1
   references:
@@ -214,7 +239,7 @@ MonoBehaviour:
     - rid: 5119975204857315338
       type: {class: GuideStep_WaitingGameOver, ns: , asm: Assembly-CSharp}
       data:
-        Text: "\u606D\u559C\u4F60\u8D62\u4E86\uFF01\r"
+        Text: "\u606D\u559C\u4F60\u8D62\u4E86\uFF01\r\n\u6A2A\u3001\u7AD6\u3001\u659C\u65B9\u5411\u8FDE\u6210\u76F4\u7EBF\u90FD\u7B97\u83B7\u80DC\u54E6"
     - rid: 5119975204857315339
       type: {class: GuideStep_WaitingGameOver, ns: , asm: Assembly-CSharp}
       data:
@@ -232,7 +257,7 @@ MonoBehaviour:
     - rid: 5119975204857315342
       type: {class: GuideStep_WaitingGameOver, ns: , asm: Assembly-CSharp}
       data:
-        Text: "\u4F60\u5B66\u4F1A\u4E86\u5417\uFF1F\n\u8BD5\u7740\u6253\u8D25\u8D8A\u6765\u8D8A\u5389\u5BB3\u7684\u5BF9\u624B\uFF0C\n\u6210\u4E3A\u4E95\u5B57\u68CB\u5927\u5E08\u5427\uFF01"
+        Text: "\u4F60\u5B66\u4F1A\u4E86\u5417\uFF1F\n\u8BD5\u7740\u6311\u6218\u6BDB\u5C0F\u5F1F\u3001\u9A6C\u5C0F\u54E5\u548C\u6D77\u8001\u5934\uFF0C\n\u6210\u4E3A\u4E95\u5B57\u68CB\u5927\u5E08\u5427\uFF01"
     - rid: 5119975204857315343
       type: {class: GuideStep_ShowMessage, ns: , asm: Assembly-CSharp}
       data:

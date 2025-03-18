@@ -44,6 +44,7 @@ public class LevelInfo
 
 	public int Id;       // 101/102/.../201/...
 	public int AiLevel;  // 1/2/3
+	public string OpponentName;
 	public PassCondition Condition;
 	public int PassCount;
 	public string GoalText;

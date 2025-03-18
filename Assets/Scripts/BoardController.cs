@@ -4,7 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using DG.Tweening;
+using Cysharp.Threading.Tasks;
+
 
 [Serializable]
 public struct PlayerId : IComparer<PlayerId>, IEquatable<PlayerId>
@@ -66,11 +69,16 @@ public readonly struct BoardLine
 	public static BoardLine AntiDia => new(BoardLineType.AntiDia, 0);
 }
 
+
 public enum GameResult : byte
 {
 	None, Win, Tie, Lose
 }
 
+
+/// <summary>
+/// 对局的棋盘状态
+/// </summary>
 [Serializable]
 public class BoardContext : ISerializationCallbackReceiver
 {
@@ -81,6 +89,7 @@ public class BoardContext : ISerializationCallbackReceiver
 	public GameResult GameResult { get; private set; }
 	public BoardLine WinnerLine { get; private set; }
 	public List<Position> History;
+	public int RetractCount { get; private set; }
 
 	public PlayerId CurrentPlayer => (History.Count & 1) == 0 ? FirstPlayer : FirstPlayer.Opponent;
 	public bool IsSelfRound => CurrentPlayer == SelfPlayer;
@@ -100,6 +109,7 @@ public class BoardContext : ISerializationCallbackReceiver
 		GameResult = GameResult.None;
 		WinnerLine = default;
 		History = new List<Position>();
+		RetractCount = 0;
 	}
 
 	public BoardContext(BoardContext source)
@@ -110,6 +120,7 @@ public class BoardContext : ISerializationCallbackReceiver
 		GameResult = source.GameResult;
 		WinnerLine = source.WinnerLine;
 		History = new(source.History);
+		RetractCount = RetractCount;
 	}
 
 	public void OnBeforeSerialize()
@@ -159,6 +170,7 @@ public class BoardContext : ISerializationCallbackReceiver
 		_board[position.Index] = PlayerId.None;
 		GameResult = GameResult.None;
 		WinnerLine = default;
+		RetractCount++;
 		return position;
 	}
 
@@ -279,7 +291,9 @@ public class BoardContext : ISerializationCallbackReceiver
 }
 
 
-
+/// <summary>
+/// 负责显示棋盘、棋子、动效等画面内容
+/// </summary>
 public class BoardController : MonoBehaviour
 {
 	// 棋格（先行后列：123-456-789）
@@ -288,6 +302,11 @@ public class BoardController : MonoBehaviour
 	public GameObject OPrefab;
 	public GameObject ConnectLinePrefab;
 	public GameObject MaskObject;
+
+	public UIPlayerIcon SelfIcon;
+	public UIPlayerIcon OpponentIcon;
+	public TMP_Text ScoreText;
+	public Image RoundIndicator;
 
 	public BoardContext Context { get; private set; }
 	public Action<Position> OnPlayerClickCell;
@@ -378,7 +397,7 @@ public class BoardController : MonoBehaviour
 	}
 
 
-	public void ShowConnectLine(BoardLine line)
+	public UniTask ShowConnectLine(BoardLine line)
 	{
 		(Position pos, float angle) = line.Type switch
 		{
@@ -394,7 +413,9 @@ public class BoardController : MonoBehaviour
 
 		var image = _connectLineObject.GetComponent<Image>();
 		image.fillAmount = 0;
-		var tw = image.DOFillAmount(1, 0.5f);
+		var tcs = new UniTaskCompletionSource();
+		image.DOFillAmount(1, 0.5f).OnComplete(() => tcs.TrySetResult());
+		return tcs.Task;
 	}
 
 	public void HideConnectLine()
@@ -411,14 +432,47 @@ public class BoardController : MonoBehaviour
 		DOTween.Kill(MaskObject);
 		MaskObject.SetActive(true);
 		MaskObject.transform.position = CellPositions[position.Index].position;
-		var mask = MaskObject.GetComponent<Image>();
-		mask.color = Color.clear;
+		var mask = MaskObject.GetComponent<CanvasGroup>();
 		mask.DOFade(0.5f, 0.5f);
 	}
 
 	public void HideMask()
 	{
-		var mask = MaskObject.GetComponent<Image>();
-		mask.DOFade(0f, 0.333f).OnComplete(() => MaskObject.SetActive(false));
+		var mask = MaskObject.GetComponent<CanvasGroup>();
+		mask.DOFade(0f, 0.4f).OnComplete(() => MaskObject.SetActive(false));
+	}
+
+
+	public void SetPlayerIcon(string selfName, string opponentName)
+	{
+		SelfIcon.Init(Context.SelfPlayer, selfName);
+		OpponentIcon.Init(Context.SelfPlayer.Opponent, opponentName);
+		UpdatePlayerRoundIndicator();
+	}
+
+	public void SetScore(int win, int tie, int lose)
+	{
+		ScoreText.text = $"{win} | {tie} | {lose}";
+	}
+
+	public void UpdatePlayerRoundIndicator()
+	{
+		if (Context.GameOver)
+			return;
+		const float MoveTime = 0.3f;
+		Vector3 targetPosition = Context.IsSelfRound ? SelfIcon.transform.position : OpponentIcon.transform.position;
+		Color targetColor = Context.IsSelfRound ? SelfIcon.Text.color : OpponentIcon.Text.color;
+		RoundIndicator.DOColor(targetColor, MoveTime);
+		RoundIndicator.transform.DOMove(targetPosition, MoveTime).OnUpdate(() =>
+		{
+			var tf = RoundIndicator.GetComponent<RectTransform>();
+			float dis = Vector3.Distance(SelfIcon.transform.position, OpponentIcon.transform.position);
+			float dis1 = Vector3.Distance(RoundIndicator.transform.position, SelfIcon.transform.position);
+			float dis2 = Vector3.Distance(RoundIndicator.transform.position, OpponentIcon.transform.position);
+			float v = Mathf.Min(dis1, dis2) * 2 / dis;
+			float s = 1f + v * 0.8f;
+			float w = tf.rect.height * s;
+			tf.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, w);
+		});
 	}
 }

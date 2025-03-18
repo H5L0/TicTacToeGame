@@ -6,28 +6,24 @@ public class StorageManager
 	public static StorageManager _instance;
 	public static StorageManager Instance => _instance ??= new StorageManager();
 
+	const string HaveReadGuidancePrefix = "HaveReadGuidance";
+	const string BoardContextPrefix = "BoardContext";
+	const string LevelStatePrefix = "LevelState";
 	const string BattleDataPrefix = "BattleData_";
 	const string FeaturePrefix = "UnlockFeature_";
 
-	public bool HaveReadGuidance { get; set; }
-	public int PassedLevelIndex = -1;
-
-	class BattleData
+	public bool HaveReadGuidance
 	{
-		public int WinCount;
-		public int LoseCount;
-		public int TieCount;
-		public int WinInRowCount;
-		public int LoseInRowCount;
-		public int TieCountInRowCount;
-		public int NotLoseInRowCount;
+		get => PlayerPrefs.GetInt(HaveReadGuidancePrefix, 0) != 0;
+		set
+		{
+			PlayerPrefs.SetInt(HaveReadGuidancePrefix, value ? 1: 0);
+			PlayerPrefs.Save();
+		}
 	}
 
-	Dictionary<int, BattleData> _battleDataDict = new();
-
-
+	private Dictionary<int, BattleData> _battleDataDict = new();
 	private Dictionary<string, bool> _featureDict;
-
 
 	public StorageManager()
 	{
@@ -42,10 +38,64 @@ public class StorageManager
 		TryLoadBattleData(2);
 	}
 
+	public void ClearAllData()
+	{
+		PlayerPrefs.DeleteAll();
+		PlayerPrefs.Save();
+		_instance = new StorageManager();
+	}
+
 	public void TrySaveLevelState(LevelState state)
 	{
-		//PlayerPrefs.SetInt($"LevelPassCount_{levelIndex}", count);
-		//PlayerPrefs.Save();
+		var saveJson = JsonUtility.ToJson(state);
+		PlayerPrefs.SetString(LevelStatePrefix, saveJson);
+		PlayerPrefs.Save();
+	}
+
+	public bool TryGetLevelState(out LevelState state)
+	{
+		var json = PlayerPrefs.GetString(LevelStatePrefix, "");
+		if (string.IsNullOrEmpty(json))
+		{
+			state = null;
+			return false;
+		}
+		else
+		{
+			state = new LevelState();
+			JsonUtility.FromJsonOverwrite(json, state);
+			return true;
+		}
+	}
+
+	public void DeleteLevelState()
+	{
+		PlayerPrefs.DeleteKey(LevelStatePrefix);
+		PlayerPrefs.DeleteKey(BoardContextPrefix);
+		PlayerPrefs.Save();
+	}
+
+	public void SaveBoardContext(BoardContext context)
+	{
+		var saveJson = JsonUtility.ToJson(context);
+		PlayerPrefs.SetString(BoardContextPrefix, saveJson);
+		PlayerPrefs.Save();
+	}
+	
+	public bool TryGetBoardContext(out BoardContext context)
+	{
+		var json = PlayerPrefs.GetString(BoardContextPrefix, "");
+		if (string.IsNullOrEmpty(json))
+		{
+			context = null;
+			return false;
+		}
+		else
+		{
+			context = new BoardContext(PlayerId.X, true);
+			JsonUtility.FromJsonOverwrite(json, context);
+			return true;
+		}
 	}
 
 	public bool IsFeatureUnlock(string key)
@@ -84,31 +134,7 @@ public class StorageManager
 	private void AddBattleData(int targetId, GameResult result)
 	{
 		var data = TryLoadBattleData(targetId);
-		// 更新战绩数据
-		switch (result)
-		{
-			case GameResult.Win:
-				data.WinCount++;
-				data.WinInRowCount++;
-				data.NotLoseInRowCount++;
-				data.LoseInRowCount = 0;
-				data.TieCountInRowCount = 0;
-				break;
-			case GameResult.Lose:
-				data.LoseCount++;
-				data.LoseInRowCount++;
-				data.WinInRowCount = 0;
-				data.TieCountInRowCount = 0;
-				data.NotLoseInRowCount = 0;
-				break;
-			case GameResult.Tie:
-				data.TieCount++;
-				data.TieCountInRowCount++;
-				data.NotLoseInRowCount++;
-				data.WinInRowCount = 0;
-				data.LoseInRowCount = 0;
-				break;
-		}
+		data.AddBattleData(result);
 		TrySaveBattleData(targetId, data);
 	}
 
@@ -153,5 +179,86 @@ public class StorageManager
 		TryUnlockFeature(-1, result, unlockFeatures);
 		TryUnlockFeature(targetId, result, unlockFeatures);
 		return unlockFeatures;
+	}
+}
+
+
+
+
+class BattleData
+{
+	public int WinCount;
+	public int LoseCount;
+	public int TieCount;
+	public int WinInRowCount;
+	public int LoseInRowCount;
+	public int TieCountInRowCount;
+	public int NotLoseInRowCount;
+
+	public void AddBattleData(GameResult result)
+	{
+		switch (result)
+		{
+			case GameResult.Win:
+				WinCount++;
+				WinInRowCount++;
+				NotLoseInRowCount++;
+				LoseInRowCount = 0;
+				TieCountInRowCount = 0;
+				break;
+			case GameResult.Lose:
+				LoseCount++;
+				LoseInRowCount++;
+				WinInRowCount = 0;
+				TieCountInRowCount = 0;
+				NotLoseInRowCount = 0;
+				break;
+			case GameResult.Tie:
+				TieCount++;
+				TieCountInRowCount++;
+				NotLoseInRowCount++;
+				WinInRowCount = 0;
+				LoseInRowCount = 0;
+				break;
+		}
+	}
+}
+
+public class LevelState
+{
+	public int LevelIndex;
+	public int PassedCount;
+
+	// 下一小关
+	public LevelState GetNextGame()
+	{
+		var levelInfo = GameSettings.Instance.Levels[LevelIndex];
+		// Count < 0: 无尽模式
+		if (levelInfo.PassCount <= 0 || PassedCount + 1 < levelInfo.PassCount)
+		{
+			return new LevelState() { LevelIndex = LevelIndex, PassedCount = PassedCount + 1 };
+		}
+		else
+		{
+			return GetNextLevel();
+		}
+	}
+
+	// 下一大关
+	public LevelState GetNextLevel()
+	{
+		if (LevelIndex + 1 < GameSettings.Instance.Levels.Count)
+		{
+			return new LevelState() { LevelIndex = LevelIndex + 1 };
+		}
+		else
+		{
+			return new LevelState() { LevelIndex = -1 };
+		}
+	}
+
+	public LevelInfo GetLevelInfo()
+	{
+		return GameSettings.Instance.Levels[LevelIndex];
 	}
 }
